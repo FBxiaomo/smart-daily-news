@@ -1,0 +1,8 @@
+# Smart Daily News - Python 依赖包
+
+# HTTP 请求（用于 API 调用）
+requests>=2.31.0
+
+# 注意：已移除 python-dotenv 依赖
+# main.py 现在使用内置的 load_env() 函数手动解析 .env 文件
+# 无需安装任何第三方环境变量加载库
