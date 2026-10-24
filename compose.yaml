@@ -1,0 +1,26 @@
+services:
+  daily-news:
+    build: .
+    restart: unless-stopped
+    init: true
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      TZ: Asia/Shanghai
+    # Environment variables have priority over /config/.env.
+    env_file:
+      - .env
+    volumes:
+      - ./config.toml:/config/config.toml:ro
+      - ./data:/config/data
+      - ./output:/config/output
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

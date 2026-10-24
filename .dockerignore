@@ -1,0 +1,12 @@
+.git
+.venv
+.env*
+config.toml
+data
+output
+tests
+__pycache__
+.pytest_cache
+.ruff_cache
+dist
+build

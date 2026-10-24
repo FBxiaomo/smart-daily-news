@@ -1,0 +1,83 @@
+# Copy with: python main.py init
+# Paths are resolved relative to this configuration, never the shell working directory.
+[briefing]
+id = "daily"
+title = "每日资讯简报"
+timezone = "Asia/Shanghai"
+send_at = "08:00"
+lookback_hours = 36
+max_stories = 10
+max_per_source = 5
+min_sources_ok = 1
+include_keywords = []
+exclude_keywords = []
+allow_undated = false
+dedupe_days = 3
+state_dir = "data"
+output_dir = "output"
+
+[schedule]
+catch_up_hours = 6
+retry_minutes = 15
+max_attempts = 3
+
+[network]
+timeout_seconds = 20
+get_retries = 2
+max_feed_bytes = 2097152
+allow_http = false
+allow_private_hosts = false
+
+# These public feeds are examples, not a grant of content redistribution rights.
+# Add primary sources relevant to your audience; keep source attribution.
+[[sources]]
+id = "ithome"
+name = "IT之家"
+url = "https://www.ithome.com/rss/"
+category = "科技"
+weight = 1.0
+
+[[sources]]
+id = "solidot"
+name = "Solidot"
+url = "https://www.solidot.org/index.rss"
+category = "科技"
+weight = 1.0
+
+[[sources]]
+id = "bbc-world"
+name = "BBC World"
+url = "https://feeds.bbci.co.uk/news/world/rss.xml"
+category = "国际"
+weight = 1.0
+
+[ai]
+enabled = false
+provider = "deepseek" # deepseek, qwen, or compatible
+# Set your provider's API base and model. The endpoint must support chat/completions.
+base_url = "https://api.deepseek.com"
+model = "deepseek-v4-pro"
+api_key_env = "DAILY_NEWS_AI_KEY"
+language = "简体中文"
+timeout_seconds = 90
+max_output_tokens = 3500
+max_input_chars = 24000
+json_mode = true
+# If true, model failure stops delivery. If false, fall back to labeled source excerpts.
+require_success = false
+
+[email]
+enabled = false
+host = "smtp.qq.com"
+port = 465
+security = "ssl" # ssl or starttls; no plaintext authentication
+username_env = "DAILY_NEWS_SMTP_USER"
+password_env = "DAILY_NEWS_SMTP_PASSWORD"
+from_env = "DAILY_NEWS_EMAIL_FROM"
+to_env = "DAILY_NEWS_EMAIL_TO"
+
+[webhook]
+enabled = false
+url_env = "DAILY_NEWS_WEBHOOK_URL"
+bearer_token_env = "DAILY_NEWS_WEBHOOK_TOKEN"
+signing_secret_env = "DAILY_NEWS_WEBHOOK_SECRET"
