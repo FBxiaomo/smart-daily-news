@@ -1,5 +1,5 @@
 """Local single-host outbox with durable snapshots and explicit uncertain outcomes."""
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import json
@@ -218,7 +218,7 @@ class State:
         if path.exists():
             raise StateError("备份文件已存在，拒绝覆盖")
         path.parent.mkdir(parents=True, exist_ok=True)
-        with sqlite3.connect(path) as target:
+        with closing(sqlite3.connect(path)) as target:
             self.db.backup(target)
 
 
