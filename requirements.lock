@@ -6,4 +6,5 @@ feedparser-sgmllib==2.1.0
 idna==3.20
 requests==2.34.2
 tzdata==2026.5
+tomlkit==0.15.2
 urllib3==2.8.0

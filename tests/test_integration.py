@@ -13,7 +13,8 @@ def test_provider_specific_non_thinking_body(cfg, digest, monkeypatch, provider)
     from conftest import FakeHttp
     cfg.data["ai"].update(enabled=True, model="integration", provider=provider)
     monkeypatch.setenv("DAILY_NEWS_AI_KEY", "local-key")
-    result = {"stories": [{"id": digest.stories[0].id, "bullets": [
+    result = {"stories": [{"id": digest.stories[0].id, "translated_title": "电池研究取得进展",
+        "source_titles": {a.id: "电池研究取得进展" for a in digest.stories[0].articles}, "bullets": [
         {"text": "研究进展。", "sources": [digest.stories[0].articles[0].id]}]}]}
     response = {"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(result)}}]}
     client = FakeHttp(post_response=(200, {}, json.dumps(response).encode()))
@@ -48,7 +49,9 @@ def test_real_http_pipeline_rss_ai_webhook_and_no_duplicate(cfg, now, monkeypatc
                 counts["ai"] += 1
                 material = json.loads(value["messages"][1]["content"])
                 result = {"stories": [
-                    {"id": story["id"], "bullets": [{"text": "研究结果已发布。",
+                    {"id": story["id"], "translated_title": "研究结果已发布",
+                     "source_titles": {article["id"]: "研究结果已发布" for article in story["articles"]},
+                     "bullets": [{"text": "研究结果已发布。",
                                                    "sources": [story["articles"][0]["id"]]}]}
                     for story in material["stories"]
                 ]}

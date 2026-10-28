@@ -7,7 +7,8 @@ import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 import sys
-from .config import ConfigError, initialize, load_config, validate_credentials
+from .ai import SynthesisError
+from .config import ConfigError, initialize, load_config, secret, validate_credentials
 from .feeds import CollectionError, collect
 from .models import utc_now
 from .network import HttpClient, NetworkError
@@ -36,6 +37,7 @@ def parser():
     root.add_argument("--config", type=Path, default=Path("config.toml"), help="配置路径（默认 config.toml）")
     commands = root.add_subparsers(dest="command")
     commands.add_parser("init", help="生成配置和 .env；保留已有文件")
+    commands.add_parser("topics", help="查看可选新闻类型")
     doctor = commands.add_parser("doctor", help="检查配置和依赖；不发送消息，不调用付费 AI")
     doctor.add_argument("--online", action="store_true", help="实际检查新闻源连通性")
     show = commands.add_parser("preview", help="生成 HTML/Markdown/文本/JSON 预览，不发送")
@@ -48,9 +50,12 @@ def parser():
     daemon.add_argument("--send", action="store_true", help="允许定时向配置目标发送")
     daemon.add_argument("--once", action="store_true", help="仅执行一次到期检查")
     commands.add_parser("status", help="查看生成和投递状态（不输出凭据）")
+    studio = commands.add_parser("studio", help="打开本地日报设置页面")
+    studio.add_argument("--port", type=int, default=0, help="本地端口，默认自动选择")
+    studio.add_argument("--no-open", action="store_true", help="不自动打开浏览器")
     resolve = commands.add_parser("resolve", help="人工核对不确定投递的结果")
     resolve.add_argument("--edition", required=True)
-    resolve.add_argument("--channel", choices=["email", "webhook"], required=True)
+    resolve.add_argument("--channel", choices=["email", "webhook", "wecom", "feishu", "serverchan"], required=True)
     resolve.add_argument("--action", choices=["delivered", "retry"], required=True)
     resolve.add_argument("--note", required=True, help="核对依据，将写入操作记录")
     backup = commands.add_parser("backup", help="创建 SQLite 一致性备份")
@@ -68,8 +73,11 @@ def doctor(cfg, online=False):
         "status": "ok", "timezone": cfg.section("briefing")["timezone"],
         "sources": len(cfg.sources), "channels": cfg.channels,
         "ai_enabled": cfg.section("ai")["enabled"],
+        "ai_key_configured": bool(secret(cfg.section("ai"), "api_key_env", required=False)),
         "dependencies": {name: metadata.version(name) for name in ("requests", "feedparser", "tzdata")},
     }
+    if result["ai_enabled"] and not result["ai_key_configured"]:
+        result["warnings"] = ["AI 密钥未配置；将发送原文摘要并标明 AI 不可用"]
     if online:
         client = HttpClient(cfg.section("network"))
         try:
@@ -91,6 +99,18 @@ def main(argv=None):
             print_json({"created": [str(p) for p in written],
                         "next": "编辑 config.toml 和 .env 后运行 doctor / preview；已有文件保持不变"})
             return 0
+        if command == "studio":
+            if not 0 <= args.port <= 65535:
+                raise ConfigError("端口必须在 0 到 65535 之间")
+            if not args.config.exists():
+                initialize(args.config)
+            from .studio import serve_studio
+            return serve_studio(args.config, port=args.port, open_browser=not args.no_open)
+        if command == "topics":
+            from .topics import TOPICS
+            print_json({"topics": [{key: topic[key] for key in ("id", "name", "group", "description")}
+                                   for topic in TOPICS]})
+            return 0
         cfg = load_config(args.config)
         if command == "doctor":
             print_json(doctor(cfg, args.online))
@@ -101,7 +121,8 @@ def main(argv=None):
                 cfg = replace(cfg, data={**cfg.data, "ai": {**cfg.section("ai"), "enabled": False}})
             digest, files = preview(cfg)
             print_json({"status": "preview", "edition": digest.edition, "stories": len(digest.stories),
-                        "files": files, "warnings": digest.warnings, "ai_usage": digest.ai_usage})
+                        "files": files, "history_id": digest.history_id,
+                        "warnings": digest.warnings, "ai_usage": digest.ai_usage})
         elif command in ("run", "retry", "schedule"):
             if not args.send:
                 raise ConfigError(f"{command} 会向配置目标发送，请显式添加 --send；只查看内容请用 preview")
@@ -128,7 +149,7 @@ def main(argv=None):
     except KeyboardInterrupt:
         print("已停止。运行记录已保留。", file=sys.stderr)
         return 130
-    except (ConfigError, StateError, CollectionError, NetworkError, OSError, ValueError) as exc:
+    except (ConfigError, StateError, CollectionError, SynthesisError, NetworkError, OSError, ValueError) as exc:
         print_json({"status": "error", "message": str(exc)})
         return 1
     except Exception as exc:

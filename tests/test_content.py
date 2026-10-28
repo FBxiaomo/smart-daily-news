@@ -101,6 +101,9 @@ def test_seen_articles_and_source_diversity(cfg, now, article):
 
 def valid_ai(digest):
     return {"stories": [{"id": digest.stories[0].id,
+                         "translated_title": "人工智能模型推动电池研究",
+                         "source_titles": {a.id: "人工智能模型推动电池研究"
+                                           for a in digest.stories[0].articles},
                          "bullets": [{"text": "研究取得进展。", "sources": [digest.stories[0].articles[0].id]}]}]}
 
 
@@ -108,14 +111,14 @@ def test_ai_cannot_cite_an_unprovided_source(digest):
     value = valid_ai(digest)
     value["stories"][0]["bullets"][0]["sources"] = ["invented"]
     with pytest.raises(SynthesisError):
-        validate_result(value, digest.stories)
+        validate_result(value, digest.stories, require_translation=True)
 
 
 def test_ai_must_cover_each_event_once(digest):
     value = valid_ai(digest)
     value["stories"] *= 2
     with pytest.raises(SynthesisError):
-        validate_result(value, digest.stories)
+        validate_result(value, digest.stories, require_translation=True)
 
 
 def test_valid_ai_has_grounded_source_ids(cfg, digest, monkeypatch):
@@ -127,6 +130,9 @@ def test_valid_ai_has_grounded_source_ids(cfg, digest, monkeypatch):
     client = FakeHttp(post_response=(200, {}, json.dumps(response).encode()))
     usage = synthesize(digest.stories, cfg, client)
     assert digest.stories[0].mode == "ai_synthesis"
+    assert digest.stories[0].translated_title == "人工智能模型推动电池研究"
+    assert digest.stories[0].title == "AI model improves battery research"
+    assert digest.stories[0].articles[0].translated_title
     assert usage == {"total_tokens": 123}
     assert len(client.post_calls) == 1
 

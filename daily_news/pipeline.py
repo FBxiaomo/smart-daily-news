@@ -19,8 +19,12 @@ class EmptyDigest(CollectionError):
     pass
 
 
-def edition_id(cfg: Config, now: datetime) -> str:
-    return cfg.section("briefing")["id"] + "-" + now.astimezone(cfg.zone).date().isoformat()
+def edition_id(cfg: Config, now: datetime, slot: str | None = None) -> str:
+    base = cfg.section("briefing")["id"] + "-" + now.astimezone(cfg.zone).date().isoformat()
+    times = cfg.section("schedule").get("times", [])
+    if len(times) > 1:
+        return base + "-" + (slot.replace(":", "") if slot else "manual")
+    return base
 
 
 def create_digest(cfg, client, now, edition, state=None, *, use_seen=False):
@@ -41,11 +45,12 @@ def create_digest(cfg, client, now, edition, state=None, *, use_seen=False):
     except SynthesisError as exc:
         if cfg.section("ai")["require_success"]:
             raise
-        warnings.append(str(exc) + "；本期使用来源摘要")
+        warnings.append("AI 不可用：" + str(exc) + "；本期使用原文摘要")
     return Digest(
         edition=edition, title=cfg.section("briefing")["title"], created_at=now.isoformat(),
         timezone=cfg.section("briefing")["timezone"], stories=stories,
         source_reports=reports, warnings=warnings, ai_usage=usage,
+        presentation=dict(cfg.section("presentation")),
     )
 
 
@@ -60,6 +65,8 @@ def preview(cfg: Config, *, now=None, client=None):
             try:
                 digest = create_digest(cfg, client, now, edition_id(cfg, now), state)
                 files = write_artifacts(digest, cfg.output_dir, preview=True)
+                from .archive import save_preview
+                digest.history_id = save_preview(state, digest)
                 return digest, files
             finally:
                 state.close()
@@ -68,7 +75,7 @@ def preview(cfg: Config, *, now=None, client=None):
             client.close()
 
 
-def run(cfg: Config, *, now=None, edition=None, client=None, sender=deliver, manual_retry=False):
+def run(cfg: Config, *, now=None, edition=None, client=None, sender=deliver, manual_retry=False, generator=None):
     validate_credentials(cfg, sending=True)
     now = now or utc_now()
     edition = edition or edition_id(cfg, now)
@@ -95,7 +102,8 @@ def run(cfg: Config, *, now=None, edition=None, client=None, sender=deliver, man
                         return {"edition": edition, "status": "deferred",
                                 "reason": "尚未到重试时间或已达自动重试上限；修复后可使用 retry"}
                     try:
-                        digest = create_digest(cfg, client, now, edition, state, use_seen=True)
+                        digest = (generator(cfg, client, now, edition, state) if generator
+                                  else create_digest(cfg, client, now, edition, state, use_seen=True))
                         state.save_digest(digest, cfg.content_fingerprint, targets, now)
                     except (CollectionError, SynthesisError, ConfigError, OSError) as exc:
                         state.generation_failed(edition, now, options["retry_minutes"], str(exc))

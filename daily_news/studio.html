@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="studio-token" content="__STUDIO_TOKEN__">
+  <meta name="color-scheme" content="light">
+  <title>日报工作台 · Smart Daily News</title>
+  <link rel="stylesheet" href="/studio.css">
+  <script defer src="/studio.js"></script>
+</head>
+<body data-page="overview">
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <div class="app">
+    <aside class="sidebar" aria-label="主导航">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M6 23V9l10 7 10-7v14M11 7l5 3 5-3"/></svg></span>
+        <div><strong>每日来信</strong><span>SMART DAILY NEWS</span></div>
+      </div>
+      <div class="side-label">你的工作台</div>
+      <nav class="nav" aria-label="设置页面">
+        <button type="button" class="nav-item is-active" data-page="overview" aria-current="page">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10 12 4l8 6v9H4zM9 19v-6h6v6"/></svg><span>总览</span>
+        </button>
+        <button type="button" class="nav-item" data-page="content">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10M18 16l2 2-2 2"/></svg><span>内容订阅</span>
+        </button>
+        <button type="button" class="nav-item" data-page="appearance">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg><span>排版与风格</span>
+        </button>
+        <button type="button" class="nav-item" data-page="delivery">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4zM4 7l8 6 8-6"/></svg><span>投递与时间</span>
+        </button>
+        <button type="button" class="nav-item" data-page="library">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16l-6-4-6 4z"/></svg><span>收藏与回顾</span>
+        </button>
+      </nav>
+      <div class="sidebar-foot">
+        <span class="online-dot" aria-hidden="true"></span>
+        <span>配置与历史保存在本机</span>
+        <small>由你选择来源、时间和接收方式</small>
+      </div>
+    </aside>
+
+    <main id="main" class="main" tabindex="-1">
+      <header class="topbar">
+        <div class="breadcrumb"><span>个人日报</span><span aria-hidden="true">/</span><strong id="breadcrumb-name">总览</strong></div>
+        <div class="top-actions">
+          <span class="save-indicator" id="save-indicator" role="status">正在加载…</span>
+          <button type="button" class="button button-soft button-small" id="reload-settings">重新加载</button>
+        </div>
+      </header>
+      <div id="global-message" class="message" role="alert" hidden></div>
+      <div class="content-shell">
+        <div class="work-area">
+          <section class="page" id="page-overview" data-section="overview">
+            <div class="page-heading"><div><p class="eyebrow">WELCOME TO YOUR DAILY</p><h1>把重要的信息，<br><em>留给每一天。</em></h1><p class="lead">一份按你的兴趣、阅读习惯和时间编排的日报。</p></div></div>
+            <div class="hero">
+              <div class="hero-copy"><span class="hero-kicker"><span class="pulse"></span> YOUR DAILY BRIEFING</span><h2>不必追赶所有信息，<br>只看真正关心的。</h2><p>订阅感兴趣的领域，选择喜欢的样式，日报会按你安排的时间送达。</p><button type="button" class="button button-inverse" data-go="content">开始设置 <span aria-hidden="true">↗</span></button></div>
+              <div class="hero-art" aria-hidden="true"><div class="art-paper paper-back"></div><div class="art-paper paper-front"><i></i><b></b><b></b><b></b><span></span><b></b><b></b></div><span class="art-sun">✳</span></div>
+            </div>
+            <div class="overview-grid">
+              <div class="overview-block"><div class="overview-icon">01</div><div><h3>关注的领域</h3><p id="overview-topics">正在读取设置</p><button type="button" class="text-link" data-go="content">选择新闻类型 →</button></div></div>
+              <div class="overview-block"><div class="overview-icon">02</div><div><h3>你的日报样式</h3><p id="overview-appearance">正在读取设置</p><button type="button" class="text-link" data-go="appearance">调整版式 →</button></div></div>
+              <div class="overview-block"><div class="overview-icon">03</div><div><h3>投递安排</h3><p id="overview-schedule">正在读取设置</p><button type="button" class="text-link" data-go="delivery">管理投递 →</button></div></div>
+            </div>
+            <div class="note-line"><span class="note-symbol" aria-hidden="true">✳</span><p>首次使用建议：先选内容和样式，生成预览，再配置接收方式并启动定时。</p></div>
+          </section>
+
+          <section class="page" id="page-content" data-section="content" hidden>
+            <div class="section-heading"><div><p class="eyebrow">01 / CONTENT</p><h1>选你真正关心的</h1><p class="lead">从不同领域中选择，或添加自己的 RSS / Atom 来源。</p></div></div>
+            <div class="setting-section">
+              <div class="section-title-row"><div><h2>内容主题 <span id="selected-topic-count" class="count-badge">0 已选</span></h2><p>每个主题会加入对应的订阅源；结果受来源可用性和文章发布时间影响。</p></div><label class="switch-label"><span>启用主题库</span><input type="checkbox" data-field="topics.enabled" aria-label="启用内容主题库"><span class="switch" aria-hidden="true"></span></label></div>
+              <div class="topic-toolbar"><label class="search-field"><span aria-hidden="true">⌕</span><span class="sr-only">搜索新闻主题</span><input type="search" id="topic-search" placeholder="搜索主题，如科技、汽车"></label><div class="inline-actions"><button type="button" class="text-link" id="select-topics">全选</button><button type="button" class="text-link muted" id="clear-topics">清空</button></div></div>
+              <div id="topic-groups" class="topic-groups"><p class="placeholder">正在加载主题…</p></div>
+              <div class="inline-warning" id="source-warning" hidden>当前没有启用的主题或自定义来源，请至少选择一个可用来源。</div>
+              <div class="feature-toggle"><div><strong>均衡覆盖已选领域</strong><p>尽量让多个已选领域出现在日报中；关闭后按时间和来源权重排序。</p></div><label class="switch-label"><span class="sr-only">均衡覆盖已选领域</span><input type="checkbox" data-field="topics.balance" aria-label="均衡覆盖已选领域"><span class="switch" aria-hidden="true"></span></label></div>
+            </div>
+            <div class="setting-section">
+              <div class="section-title-row"><div><h2>筛选偏好</h2><p>关键词匹配标题与来源摘要；留空表示不限定。</p></div></div>
+              <div class="form-grid">
+                <label class="field field-full"><span>感兴趣的关键词</span><input type="text" id="include-keywords" placeholder="例如：AI、芯片、新能源汽车" autocomplete="off"><small>用中文顿号或英文逗号分隔；命中任意一个词即可。</small></label>
+                <label class="field"><span>文章时间范围</span><select data-field="briefing.lookback_hours" data-type="number"><option value="12">最近 12 小时</option><option value="24">最近 24 小时</option><option value="36">最近 36 小时</option><option value="48">最近 2 天</option><option value="72">最近 3 天</option><option value="168">最近 7 天</option></select></label>
+                <label class="field"><span>每期最多事件数</span><input type="number" data-field="briefing.max_stories" min="1" max="30" step="1" inputmode="numeric"><small>允许 1–30 条。</small></label>
+              </div>
+            </div>
+            <div class="setting-section">
+              <div class="section-title-row"><div><h2>自定义来源</h2><p>添加你信任的 RSS / Atom 地址；新闻正文和版权以来源规则为准。</p></div></div>
+              <div id="source-list" class="source-list"></div>
+              <details class="add-source"><summary>＋ 添加 RSS / Atom 来源</summary><form id="source-form" class="form-grid" novalidate>
+                <label class="field"><span>来源名称</span><input id="source-name" maxlength="80" placeholder="例如：我的科技来源" required></label>
+                <label class="field"><span>分类名称</span><input id="source-category" maxlength="40" placeholder="例如：科技"></label>
+                <label class="field field-full"><span>订阅地址</span><input type="url" id="source-url" placeholder="https://example.com/feed.xml" required><small>请输入 HTTPS RSS / Atom 订阅地址。</small></label>
+                <div class="field-full"><button class="button button-soft button-small" type="submit">添加来源</button></div>
+              </form></details>
+            </div>
+          </section>
+
+          <section class="page" id="page-appearance" data-section="appearance" hidden>
+            <div class="section-heading"><div><p class="eyebrow">02 / APPEARANCE</p><h1>做成你喜欢的样子</h1><p class="lead">三个选择，相互组合。共 27 种属于你的阅读体验。</p></div><button type="button" class="button button-soft button-small jump-preview">查看预览 ↓</button></div>
+            <div class="setting-section"><label class="field"><span>日报名称</span><input data-field="briefing.title" maxlength="120" placeholder="例如：小墨的每日资讯"><small>名称会出现在预览和邮件标题中。</small></label></div>
+            <div class="setting-section"><div class="step-title"><span>01</span><div><h2>阅读排版</h2><p>选择信息如何排列。</p></div></div><div class="layout-options" id="layout-options" role="radiogroup" aria-label="日报排版"></div></div>
+            <div class="setting-section"><div class="step-title"><span>02</span><div><h2>视觉风格</h2><p>让色彩适合你的阅读时刻。</p></div></div><div class="theme-options" id="theme-options" role="radiogroup" aria-label="视觉风格"></div></div>
+            <div class="setting-section"><div class="step-title"><span>03</span><div><h2>内容详略</h2><p>自由选择更快浏览，或多看一些上下文。</p></div></div><div class="density-options" id="density-options" role="radiogroup" aria-label="内容详略"></div></div>
+            <div class="note-line"><span class="note-symbol" aria-hidden="true">✳</span><p>排版与配色用于 HTML 预览和邮件。企业微信、飞书等机器人以文字和来源链接呈现，长度可能受平台限制。</p></div>
+          </section>
+
+          <section class="page" id="page-delivery" data-section="delivery" hidden>
+            <div class="section-heading"><div><p class="eyebrow">03 / DELIVERY</p><h1>让日报准时到达</h1><p class="lead">先选择接收渠道，再安排你想阅读的时间。</p></div></div>
+            <div class="setting-section">
+              <div class="section-title-row"><div><h2>接收方式</h2><p>可启用多个渠道。留空的密钥字段会保留原有设置。</p></div></div>
+              <div class="channel-list">
+                <div class="channel" data-channel="email">
+                  <div class="channel-heading"><div class="channel-icon icon-mail" aria-hidden="true">✉</div><div class="channel-title"><h3>邮件</h3><p>HTML 排版与纯文本同时发送</p></div><label class="switch-label"><span class="sr-only">启用邮件</span><input type="checkbox" data-field="email.enabled" aria-label="启用邮件"><span class="switch" aria-hidden="true"></span></label></div>
+                  <div class="channel-details" data-details="email" hidden><div class="form-grid">
+                    <label class="field"><span>SMTP 服务器</span><input data-field="email.host" placeholder="smtp.qq.com"></label>
+                    <label class="field"><span>端口</span><input type="number" data-field="email.port" min="1" max="65535"></label>
+                    <label class="field"><span>连接方式</span><select data-field="email.security"><option value="ssl">SSL / TLS</option><option value="starttls">STARTTLS</option></select></label>
+                    <label class="field"><span>SMTP 用户名</span><input data-secret="smtp_user" type="text" autocomplete="off"><small data-secret-status="smtp_user"></small></label>
+                    <label class="field"><span>SMTP 授权码</span><input data-secret="smtp_password" type="password" autocomplete="new-password"><small data-secret-status="smtp_password"></small></label>
+                    <label class="field"><span>发件邮箱</span><input data-secret="email_from" type="text" autocomplete="off"><small data-secret-status="email_from"></small></label>
+                    <label class="field field-full"><span>收件邮箱</span><input data-secret="email_to" type="text" autocomplete="off"><small data-secret-status="email_to"></small><small>多个收件人用英文逗号分隔；使用邮箱提供的 SMTP 授权码。</small></label>
+                  </div></div>
+                </div>
+                <div class="channel" data-channel="wecom">
+                  <div class="channel-heading"><div class="channel-icon icon-wecom" aria-hidden="true">企</div><div class="channel-title"><h3>企业微信</h3><p>发送到企业微信群机器人</p></div><label class="switch-label"><span class="sr-only">启用企业微信</span><input type="checkbox" data-field="wecom.enabled" aria-label="启用企业微信"><span class="switch" aria-hidden="true"></span></label></div>
+                  <div class="channel-details" data-details="wecom" hidden><label class="field"><span>群机器人 Webhook 地址</span><input data-secret="wecom_url" type="password" autocomplete="new-password"><small data-secret-status="wecom_url"></small></label><p class="field-help">这是企业微信群机器人，不是个人微信直接消息。</p></div>
+                </div>
+                <div class="channel" data-channel="feishu">
+                  <div class="channel-heading"><div class="channel-icon icon-feishu" aria-hidden="true">飞</div><div class="channel-title"><h3>飞书</h3><p>发送到飞书群自定义机器人</p></div><label class="switch-label"><span class="sr-only">启用飞书</span><input type="checkbox" data-field="feishu.enabled" aria-label="启用飞书"><span class="switch" aria-hidden="true"></span></label></div>
+                  <div class="channel-details" data-details="feishu" hidden><div class="form-grid">
+                    <label class="field field-full"><span>机器人 Webhook 地址</span><input data-secret="feishu_url" type="password" autocomplete="new-password"><small data-secret-status="feishu_url"></small></label>
+                    <label class="field"><span>自定义关键词（可选）</span><input data-field="feishu.keyword" placeholder="如在飞书机器人中启用"></label>
+                    <label class="field"><span>签名密钥（可选）</span><input data-secret="feishu_secret" type="password" autocomplete="new-password"><small data-secret-status="feishu_secret"></small></label>
+                  </div></div>
+                </div>
+                <div class="channel" data-channel="serverchan">
+                  <div class="channel-heading"><div class="channel-icon icon-serverchan" aria-hidden="true">微</div><div class="channel-title"><h3>Server酱</h3><p>通过第三方服务接收微信提醒</p></div><label class="switch-label"><span class="sr-only">启用 Server酱</span><input type="checkbox" data-field="serverchan.enabled" aria-label="启用 Server酱"><span class="switch" aria-hidden="true"></span></label></div>
+                  <div class="channel-details" data-details="serverchan" hidden><label class="field"><span>SendKey</span><input data-secret="serverchan_key" type="password" autocomplete="new-password"><small data-secret-status="serverchan_key"></small></label><p class="field-help">需自行完成 Server酱账号及微信接收设置，服务能力以其配置为准。</p></div>
+                </div>
+                <div class="channel" data-channel="webhook">
+                  <div class="channel-heading"><div class="channel-icon icon-webhook" aria-hidden="true">↗</div><div class="channel-title"><h3>通用 Webhook</h3><p>发送结构化数据到你自己的服务</p></div><label class="switch-label"><span class="sr-only">启用通用 Webhook</span><input type="checkbox" data-field="webhook.enabled" aria-label="启用通用 Webhook"><span class="switch" aria-hidden="true"></span></label></div>
+                  <div class="channel-details" data-details="webhook" hidden><div class="form-grid">
+                    <label class="field field-full"><span>Webhook 地址</span><input data-secret="webhook_url" type="password" autocomplete="new-password"><small data-secret-status="webhook_url"></small></label>
+                    <label class="field"><span>Bearer Token（可选）</span><input data-secret="webhook_token" type="password" autocomplete="new-password"><small data-secret-status="webhook_token"></small></label>
+                    <label class="field"><span>签名密钥（可选）</span><input data-secret="webhook_secret" type="password" autocomplete="new-password"><small data-secret-status="webhook_secret"></small></label>
+                  </div></div>
+                </div>
+              </div>
+            </div>
+            <div class="setting-section">
+              <div class="section-title-row"><div><h2>消息内容</h2><p>企业微信、飞书和 Server酱使用文字及来源链接，受平台字节上限影响时可能截断。</p></div></div>
+              <label class="field"><span>机器人与提醒消息展示</span><select data-field="push.content"><option value="full">完整内容（推荐）</option><option value="summary">精简摘要</option><option value="notice">仅标题提醒</option></select><small>HTML 样式仅用于预览与邮件；消息内容仍以各渠道支持的格式发送。</small></label>
+            </div>
+            <div class="setting-section">
+              <div class="section-title-row"><div><h2>什么时候接收</h2><p>在所选日期的每个时间生成并投递一次。</p></div></div>
+              <fieldset class="weekday-field"><legend>每周哪些天</legend><div id="weekday-options" class="weekday-options"></div></fieldset>
+              <label class="field timezone-field"><span>发送时区</span><input data-field="briefing.timezone" placeholder="Asia/Shanghai" autocomplete="off"><small>填写 IANA 时区，例如 Asia/Shanghai 或 UTC；发送时间按此时区计算。</small></label>
+              <div class="time-heading"><strong>发送时间</strong><button type="button" class="text-link" id="add-time">＋ 添加时间</button></div><div id="time-list" class="time-list"></div>
+              <p class="field-help">按配置中的时区运行。电脑或服务器需要保持在线，且日报工作台服务进程需要运行。</p>
+            </div>
+            <div class="setting-section">
+              <div class="section-title-row"><div><h2>智能整合 <span class="optional-label">可选</span></h2><p>使用 DeepSeek、千问或兼容接口整合来源摘要，可能产生 API 费用。启用后会将选中文章的标题、发布时间与摘要发送给所选模型服务。</p></div><label class="switch-label"><span class="sr-only">启用 AI 整合</span><input type="checkbox" data-field="ai.enabled" aria-label="启用 AI 整合"><span class="switch" aria-hidden="true"></span></label></div>
+              <div class="form-grid ai-fields" id="ai-details" hidden>
+                <label class="field"><span>模型服务</span><select data-field="ai.provider"><option value="deepseek">DeepSeek</option><option value="qwen">千问</option><option value="compatible">兼容接口</option></select></label>
+                <label class="field"><span>模型名称</span><input data-field="ai.model" placeholder="例如 deepseek-v4-pro"></label>
+                <label class="field field-full"><span>API Base URL</span><input data-field="ai.base_url" type="url" placeholder="https://api.deepseek.com"><small>更换服务商时，请填写其对应地域的接口地址和可用模型。</small></label>
+                <label class="field field-full"><span>API Key</span><input data-secret="ai_key" type="password" autocomplete="new-password"><small data-secret-status="ai_key"></small><small>更换模型服务商后，请填写对应平台的 API Key。</small></label>
+                <label class="check-line field-full"><input type="checkbox" data-field="ai.translate_titles"><span>尽量把外文新闻标题和来源标题翻译成中文；原文仍保留在记录中</span></label>
+                <label class="check-line field-full"><input type="checkbox" data-field="ai.require_success"><span>模型失败时停止本期投递（关闭后会标注并使用来源摘要）</span></label>
+              </div>
+            </div>
+            <div class="schedule-bar"><div><span class="schedule-badge" id="schedule-dot"></span><strong id="schedule-status">正在读取调度状态</strong><p id="schedule-message">请先保存设置，再启动定时。</p></div><div class="schedule-actions"><button class="button button-soft" id="stop-scheduler" type="button">停止</button><button class="button button-primary" id="start-scheduler" type="button">启动定时</button></div></div>
+          </section>
+
+          <section class="page" id="page-library" data-section="library" hidden>
+            <div class="section-heading"><div><p class="eyebrow">04 / LIBRARY</p><h1>值得回看的内容</h1><p class="lead">搜索历史日报、收藏文章，或整理最近 7 天的热点。</p></div></div>
+            <div class="library-tabs" role="tablist" aria-label="收藏和回顾">
+              <button type="button" class="library-tab is-active" role="tab" aria-selected="true" data-library-tab="history">历史日报</button>
+              <button type="button" class="library-tab" role="tab" aria-selected="false" data-library-tab="favorites">我的收藏</button>
+              <button type="button" class="library-tab" role="tab" aria-selected="false" data-library-tab="weekly">近 7 天周报</button>
+            </div>
+            <div class="library-toolbar" id="library-search-tools"><label class="search-field"><span aria-hidden="true">⌕</span><span class="sr-only">搜索历史日报和收藏</span><input type="search" id="history-search" placeholder="搜索历史日报或收藏新闻"></label><button class="button button-soft button-small" type="button" id="refresh-history">刷新</button></div>
+            <div class="library-view" data-library-view="history">
+              <div id="history-list" class="history-list"><p class="placeholder">正在加载历史…</p></div>
+              <div id="history-detail" class="history-detail" hidden><div class="section-title-row"><div><h2 id="history-detail-title">日报内容</h2><p>点击文章旁的收藏按钮，可放入我的收藏。</p></div><button type="button" class="text-link" id="close-history-detail">收起</button></div><div id="history-articles"></div></div>
+            </div>
+            <div class="library-view" data-library-view="favorites" hidden><div id="favorites-list" class="history-list"><p class="placeholder">正在加载收藏…</p></div></div>
+            <div class="library-view" data-library-view="weekly" hidden>
+              <div class="weekly-intro"><div><span class="weekly-label">THE WEEK IN REVIEW</span><h2>把这一周，重新串起来。</h2><p>按本地近 7 天已保存日报的报道来源整理事件；结果不代表全网热度。</p></div><div class="weekly-number" aria-hidden="true">07<span>DAYS</span></div></div>
+              <label class="check-line weekly-ai"><input type="checkbox" id="weekly-use-ai"><span>使用 AI 整合周报（可能产生 API 费用；需启用并配置 AI）</span></label>
+              <div class="inline-actions"><button class="button button-primary" id="weekly-preview" type="button">生成周报预览</button><button class="button button-soft" id="weekly-send" type="button" disabled>发送这份周报</button></div>
+              <p class="field-help" id="weekly-status" role="status">生成前会使用已保存的历史内容；发送需要再次确认。</p>
+              <div id="weekly-metrics" class="weekly-metrics" hidden></div>
+            </div>
+          </section>
+        </div>
+
+        <aside class="preview-panel" id="preview-panel" aria-label="日报预览">
+          <div class="preview-head"><div><p class="eyebrow">LIVE PREVIEW</p><h2>看看你的日报</h2></div><span id="preview-badge" class="preview-badge">示例预览</span></div>
+          <div class="preview-stage" id="preview-stage"><iframe id="preview-frame" title="日报预览" sandbox="" referrerpolicy="no-referrer"></iframe><p id="preview-placeholder" class="preview-placeholder">正在准备示例预览…</p></div>
+          <div class="preview-info"><span class="preview-spark" aria-hidden="true">✳</span><p id="preview-note">样式切换会更新示例。真实新闻预览使用已保存的来源，不调用 AI。</p></div>
+          <button type="button" class="button button-outline preview-live" id="live-preview">采集真实新闻预览 <span aria-hidden="true">↗</span></button>
+          <button type="button" class="button button-outline preview-live" id="ai-preview">AI 整合预览（可能产生费用） <span aria-hidden="true">↗</span></button>
+        </aside>
+      </div>
+      <div class="save-bar" id="save-bar"><div><strong id="save-title">设置已保存</strong><p id="save-description">修改后可保存到本地配置。</p></div><button type="button" class="button button-primary" id="save-settings" disabled>保存设置</button></div>
+      <footer class="site-footer">SMART DAILY NEWS <span>·</span> 为你留一点时间，阅读世界。</footer>
+    </main>
+  </div>
+</body>
+</html>

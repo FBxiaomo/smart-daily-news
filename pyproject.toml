@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "smart-daily-news"
-version = "0.2.0"
-description = "Source-linked daily briefings with durable email and webhook delivery"
+version = "0.3.0"
+description = "Customizable daily briefings with a local studio, archives and durable multi-channel delivery"
 requires-python = ">=3.11"
-dependencies = ["requests>=2.32.4,<3", "feedparser>=6.0.11,<7", "tzdata>=2025.2"]
+dependencies = ["requests>=2.32.4,<3", "feedparser>=6.0.11,<7", "tzdata>=2025.2", "tomlkit>=0.13.3,<1"]
 
 [project.scripts]
 smart-daily-news = "daily_news.cli:main"
@@ -16,7 +16,7 @@ smart-daily-news = "daily_news.cli:main"
 packages = ["daily_news"]
 
 [tool.setuptools.package-data]
-daily_news = ["*.toml", "*.example"]
+daily_news = ["*.toml", "*.example", "*.html", "*.css", "*.js"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

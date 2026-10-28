@@ -2,3 +2,4 @@
 requests>=2.32.4,<3
 feedparser>=6.0.11,<7
 tzdata>=2025.2
+tomlkit>=0.13.3,<1

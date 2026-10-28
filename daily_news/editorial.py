@@ -64,6 +64,20 @@ def build_stories(articles: list[Article], cfg: Config, now: datetime,
         else:
             groups.append([article])
     groups.sort(key=lambda g: -(score(g[0]) + min(len({a.source_id for a in g}) - 1, 2) * 0.25))
+    topics = cfg.section("topics")
+    if topics["enabled"] and topics.get("balance", True):
+        # Interleave ranked categories, so a high-volume feed cannot occupy every slot.
+        from collections import deque
+        categories = {}
+        for group in groups:
+            categories.setdefault(group[0].category, deque()).append(group)
+        mixed = []
+        while categories:
+            for category in list(categories):
+                mixed.append(categories[category].popleft())
+                if not categories[category]:
+                    del categories[category]
+        groups = mixed
     stories, counts = [], {}
     for group in groups:
         lead = group[0]

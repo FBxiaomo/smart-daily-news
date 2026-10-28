@@ -21,6 +21,7 @@ class Article:
     published_at: str | None
     excerpt: str
     weight: float = 1.0
+    translated_title: str = ""
 
 
 @dataclass
@@ -31,6 +32,7 @@ class Story:
     articles: list[Article]
     bullets: list[dict] = field(default_factory=list)
     mode: str = "source_excerpt"
+    translated_title: str = ""
 
 
 @dataclass
@@ -43,6 +45,7 @@ class Digest:
     source_reports: list[dict]
     warnings: list[str] = field(default_factory=list)
     ai_usage: dict = field(default_factory=dict)
+    presentation: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return asdict(self)

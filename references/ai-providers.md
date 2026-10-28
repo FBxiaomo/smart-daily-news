@@ -49,7 +49,9 @@ require_success = true
 ## 质量与费用开关
 
 - require_success=true：AI 不可用、引用无效或输出截断时停止本期投递。
-- require_success=false：改用来源摘要，并在日报中明确标注降级原因。
+- require_success=false（默认）：包括未配置密钥、网络失败或回复校验失败，均改用原文摘要，并标注“AI 不可用”及降级原因。
+- translate_titles=true（默认）：尽量把事件标题、来源标题与要点翻译成配置语言，原文仍保留在 JSON 记录中；可关闭标题翻译以适配旧接口。
+- 工作台提供明确费用提示的 AI 整合预览；免费真实预览始终不调用模型。
 - max_input_chars：模型输入 JSON 的字符预算，超限拒绝调用，不截断 JSON。
 - max_output_tokens：回复预算；不足时拒绝使用被截断的内容。
 - max_stories：减少数量有助于把预算用在更充分的整合上。

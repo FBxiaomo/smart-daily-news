@@ -1,25 +1,30 @@
 # 部署与运维
 
-适用单台 Windows / Linux 主机上的个人或小团队。SQLite 与进程锁放在本地磁盘，
-不要让多台主机通过网络共享目录共同运行。多个独立简报使用独立配置/数据目录。
+适用单台 Windows / Linux 主机上的个人或小团队。SQLite 与进程锁放在本地磁盘，不要让多台主机通过网络共享目录共同运行。多个独立简报使用独立配置和数据目录。
 
-## 定时
+## 工作台与定时
+
+```bash
+python main.py --config /absolute/path/config.toml studio
+```
+
+页面只监听本机地址。按界面选择星期、每天一个或多个时间，保存设置后点击“启动定时”。仅保存时间不会启动调度。工作台中的调度运行在该工作台服务进程内，主机和服务都需要保持在线；关闭浏览器标签不代表停止服务。需要修改设置或结束服务时，先点击“停止”，等待当前任务结束并显示已停止，再在终端按 `Ctrl+C`。环境变量会优先于 .env，修改后如有覆盖请检查进程环境。
+
+同一状态目录有调度锁，避免多个进程同时运行调度；也可以不用工作台中的调度，而选择独立进程：
 
 ```bash
 python main.py --config /absolute/path/config.toml schedule --send
 ```
 
-每 30 秒检查一次，按 briefing.timezone 和 send_at 判定。
-程序重启后只在当天 catch_up_hours 窗口内补发；不在深夜补发一周积压内容。
-夏令时重复时段使用同一期号去重；不存在的时刻在跳时后窗口内补发。
-生成失败和明确可重试的投递失败按 retry_minutes 间隔、max_attempts 上限重试。
-不确定投递、认证错误、超过上限的任务需要检查 status 并处理。
-主机睡眠/离线时无法准点发送；用于稳定业务时放在持续在线主机并监控失败状态。
+或让系统每 5 分钟执行一次到期检查：
 
-也可以让系统每 5 分钟执行一次 schedule --send --once；与常驻进程二选一。
-Windows 任务计划程序应使用虚拟环境 python.exe 的完整路径及 config.toml 的完整路径，
-设置无用户登录也可运行、失败后重试、禁止同一任务并发。
-Linux 可用 systemd 管理常驻进程，或 cron 运行单次检查。
+```bash
+python main.py --config /absolute/path/config.toml schedule --send --once
+```
+
+三种方式选择一种。系统任务需使用虚拟环境 python 与配置文件的完整路径，并安排常驻主机。默认每 30 秒检查，按 `briefing.timezone`、所选星期和时间判断；如有多个时间，每个时间有独立期次。程序重启后只在当天 `catch_up_hours` 窗口内处理最新一个符合条件的时间，避免补发大量积压消息。
+
+生成失败和明确可重试的投递失败按 `retry_minutes` 与 `max_attempts` 控制；无符合条件的新文章时不会生成空日报。认证失败、重试次数耗尽或结果不确定需要检查状态并处理。
 
 示例 systemd 单元（替换路径及用户）：
 
@@ -45,8 +50,7 @@ WantedBy=multi-user.target
 
 ## Docker
 
-仓库包含 Dockerfile 和 compose.yaml，默认以非 root 用户运行，根文件系统只读。
-先在宿主机执行 init，编辑配置并确保 data / output 目录由 UID 10001 可写：
+仓库提供 Dockerfile 与 compose.yaml，使用非 root 用户和只读根文件系统。先初始化并配置、确认 data 和 output 目录由 UID 10001 可写：
 
 ```bash
 mkdir -p data output
@@ -57,10 +61,11 @@ docker compose run --rm daily-news preview --no-ai
 docker compose up -d
 ```
 
-配置默认路径 state_dir="data"、output_dir="output" 与 Compose 挂载一致。
-不要把 .env 打包进镜像。容器构建在 CI 校验；本地未安装 Docker 时不要声称已做本机容器运行测试。
+Compose 默认运行独立调度器，配置默认的 `state_dir="data"`、`output_dir="output"` 与挂载一致。不要将 .env 打包进镜像；工作台与该常驻调度选择其一。实际 Docker 及目标平台的运行情况以部署环境验证为准。
 
-## 投递状态与恢复
+## 渠道和投递状态
+
+邮件、企微群机器人、飞书群机器人、Server酱 Turbo 和通用 Webhook 可独立启用，失败和结果分开记录。机器人内容模式及平台限制见 [通知说明](notifications.md)。
 
 ```bash
 python main.py status
@@ -68,12 +73,12 @@ python main.py retry --send --edition daily-2026-10-25
 ```
 
 - pending：待投递。
-- sending：正在提交。若进程中断，下次恢复为 uncertain。
-- sent：SMTP/HTTP 接收端已接受，不会在同一期再次发送。
-- failed：明确失败。可重试错误自动按间隔重试；修复配置后可显式 retry。
-- uncertain：可能已经收到，不自动重复发送。retry 也不会绕过这一状态。
+- sending：正在提交；若进程中断，下次恢复为 uncertain。
+- sent：平台或服务器已接受；不等于最终用户一定收到。同一期成功渠道不重复发送。
+- failed：明确失败，可重试错误按间隔有限重试；修复后可显式 retry。
+- uncertain：可能已收到，不自动重发；retry 不会绕过该状态。
 
-核对接收端后记录结果：
+核对接收端后选择其中一种处理：
 
 ```bash
 python main.py resolve --edition daily-2026-10-25 --channel webhook --action delivered --note "接收端日志确认已保存"
@@ -81,29 +86,16 @@ python main.py resolve --edition daily-2026-10-25 --channel webhook --action ret
 python main.py retry --send --edition daily-2026-10-25
 ```
 
-实际使用时在 delivered / retry 两种动作中选一个。resolve 本身不发送。
-如果接收端无法核对，重新投递可能产生重复，不能宣称端到端 exactly-once。
-SMTP 部分收件人拒绝也归入 uncertain，核对后自行处理已收到的人。
+`resolve` 本身不发送。SMTP 部分收件人被拒绝也标为 uncertain；如果不能核实接收结果，重发可能产生重复。期次在投递前保存固定快照；重试复用原内容。内容配置或目标变化时不能静默把旧快照投递到新目标：恢复原配置重试，或有意创建新的期次。
 
-一期在发送前保存固定快照；重试复用原文和引用。内容配置或目标改变时，
-拒绝把旧快照默默投递到新目标。恢复旧配置重试，或显式指定新的 --edition。
-重新生成预览会刷新当前材料，但不会覆盖待补发的数据库快照。
-预览不占用投递次数；启用 AI 的预览会产生一次模型调用。
+## 历史、回顾与备份
 
-## 备份、观察与升级
+本地历史、收藏默认长期保留，不会自动过期。工作台支持手动搜索、收藏和清理；未完成的期次不能删除。七日回顾仅依据本地近 168 小时的记录，默认不调用 AI；用户选择 AI 可能产生 API 费用，发送需要手动确认。详见 [历史与回顾](archive.md)。
 
 ```bash
 python main.py backup --output backups/daily-news-2026-10-25.sqlite3
 ```
 
-使用 SQLite 备份 API，包含快照、状态、来源缓存和操作记录。文件已存在时不覆盖。
-恢复时先停止调度，再把备份放回 state_dir/daily-news.sqlite3；同时恢复匹配的 config.toml 和 .env。
-不要在程序运行中直接替换数据库，也不要只复制正在使用的 WAL 数据库主文件。
+使用 SQLite 备份 API 保存数据库，包括快照、投递状态、历史、收藏、来源缓存和操作记录；已有目标文件不会覆盖。另行备份对应 config.toml、.env 和需要保留的导出文件，并妥善保管。恢复前先停止所有调度，再恢复完整数据；不要在运行中直接替换数据库或只复制有活动 WAL 的主文件。
 
-state_dir/run.log 滚动保存日志；status 输出最近任务与人工处理记录。
-监控生成 failed、投递 failed/uncertain、超过期望时间无 complete 的情况。
-保留周期由运营者决定；定期备份并清理不再需要的导出文件，避免长期无限积累。
-
-升级先备份，然后在虚拟环境安装锁定依赖、跑测试和 preview，再重启调度。
-默认分支上的代码变化不会自动修改已运行服务。
-正式对外服务前应完成真实模型、实际邮箱/Webhook 接收端和持续运行验收；模拟测试不能代替这些验证。
+运行日志保存在 state_dir/run.log 并轮转。升级前先备份，安装锁定依赖并预览，再启动调度；旧配置中缺失的新增字段使用兼容默认值，新配置默认全选类型。正式使用前，以自己的模型、邮箱、机器人和网络环境完成投递与持续运行验收。

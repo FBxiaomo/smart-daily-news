@@ -120,5 +120,8 @@ def deliver(channel, digest, cfg, client):
         send_email(digest, cfg, client)
     elif channel == "webhook":
         send_webhook(digest, cfg, client)
+    elif channel in ("wecom", "feishu", "serverchan"):
+        from .notifications import send_feishu, send_serverchan, send_wecom
+        {"wecom": send_wecom, "feishu": send_feishu, "serverchan": send_serverchan}[channel](digest, cfg, client)
     else:
         raise DeliveryError("未支持的投递渠道")

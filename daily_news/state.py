@@ -13,9 +13,9 @@ class StateError(RuntimeError):
 
 
 @contextmanager
-def run_lock(directory: Path):
+def run_lock(directory: Path, name: str = "run.lock"):
     directory.mkdir(parents=True, exist_ok=True)
-    handle = (directory / "run.lock").open("a+b")
+    handle = (directory / name).open("a+b")
     try:
         handle.seek(0, os.SEEK_END)
         if handle.tell() == 0:
@@ -115,6 +115,9 @@ class State:
     def start_generation(self, edition, now, max_attempts, manual_retry=False):
         job = self.db.execute("SELECT * FROM jobs WHERE edition=?", (edition,)).fetchone()
         attempts = job["attempts"] if job else 0
+        if job and job["status"] == "complete":
+            # History cleanup must not remove the record that prevents duplicate sends.
+            return False
         if job and not manual_retry:
             if attempts >= max_attempts or job["next_at"] and now.isoformat() < job["next_at"]:
                 return False

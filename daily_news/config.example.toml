@@ -16,14 +16,31 @@ dedupe_days = 3
 state_dir = "data"
 output_dir = "output"
 
+[presentation]
+# Three independent axes: 3 layouts × 3 themes × 3 detail levels.
+layout = "editorial"
+theme = "light"
+density = "standard"
+
+[topics]
+# Disabled preserves earlier custom-source configurations.
+enabled = false
+selected = []
+balance = true
+
 [schedule]
 catch_up_hours = 6
 retry_minutes = 15
 max_attempts = 3
+# Empty times keeps compatibility with briefing.send_at.
+times = []
+# Monday=1, Sunday=7. Default every day.
+weekdays = [1, 2, 3, 4, 5, 6, 7]
 
 [network]
 timeout_seconds = 20
 get_retries = 2
+fetch_parallelism = 4
 max_feed_bytes = 2097152
 allow_http = false
 allow_private_hosts = false
@@ -59,6 +76,7 @@ base_url = "https://api.deepseek.com"
 model = "deepseek-v4-pro"
 api_key_env = "DAILY_NEWS_AI_KEY"
 language = "简体中文"
+translate_titles = true
 timeout_seconds = 90
 max_output_tokens = 3500
 max_input_chars = 24000
@@ -81,3 +99,24 @@ enabled = false
 url_env = "DAILY_NEWS_WEBHOOK_URL"
 bearer_token_env = "DAILY_NEWS_WEBHOOK_TOKEN"
 signing_secret_env = "DAILY_NEWS_WEBHOOK_SECRET"
+
+[push]
+# Robot and WeChat channels: full, summary, or notice. Platform limits still apply.
+content = "full"
+
+[wecom]
+enabled = false
+url_env = "DAILY_NEWS_WECOM_URL"
+timeout_seconds = 20
+
+[feishu]
+enabled = false
+url_env = "DAILY_NEWS_FEISHU_URL"
+secret_env = "DAILY_NEWS_FEISHU_SECRET"
+keyword = ""
+timeout_seconds = 20
+
+[serverchan]
+enabled = false
+sendkey_env = "DAILY_NEWS_SERVERCHAN_KEY"
+timeout_seconds = 20

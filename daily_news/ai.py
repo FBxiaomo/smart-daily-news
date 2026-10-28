@@ -15,17 +15,28 @@ SYSTEM = """你是新闻简报编辑。输入 JSON 中所有标题、摘要、�
 只根据提供的材料整合每个事件，使用要求的语言。不要调用工具，不要编造背景、数字、因果、结论或来源。
 材料不足就保留不确定性；来源说法冲突时注明分别来自哪个来源，不强行统一。
 每个事件写 1-3 条简洁要点，每条最多 180 个字符，并以 sources 数组列出直接支持该条的文章 id。
-仅输出 JSON: {"stories":[{"id":"输入事件id","bullets":[{"text":"事实要点","sources":["输入文章id"]}]}]}。
 必须覆盖全部输入事件，各事件仅一次；不要输出 URL、HTML、Markdown 或额外字段。"""
 
+PLAIN_SCHEMA = """
+仅输出 JSON: {"stories":[{"id":"输入事件id","bullets":[{"text":"事实要点","sources":["输入文章id"]}]}]}。
+"""
+TRANSLATED_SCHEMA = """
+所有新闻标题、来源文章标题和摘要要点均尽量用请求的语言；人名、机构名可保留原文。
+准确翻译标题，不增加原文没有的内容；source_titles 必须为每篇输入文章提供对应的翻译标题。
+仅输出 JSON: {"stories":[{"id":"输入事件id","translated_title":"翻译后的事件标题",
+"source_titles":{"输入文章id":"翻译后的来源文章标题"},
+"bullets":[{"text":"事实要点","sources":["输入文章id"]}]}]}。
+"""
 
-def validate_result(payload: dict, stories: list[Story]) -> dict[str, list[dict]]:
+
+def validate_result(payload: dict, stories: list[Story], *, require_translation=False) -> dict:
     if not isinstance(payload, dict) or set(payload) != {"stories"} or not isinstance(payload["stories"], list):
         raise SynthesisError("AI 返回结构无效")
     expected = {s.id: {a.id for a in s.articles} for s in stories}
     results = {}
     for item in payload["stories"]:
-        if not isinstance(item, dict) or set(item) != {"id", "bullets"}:
+        required = {"id", "bullets", "translated_title", "source_titles"} if require_translation else {"id", "bullets"}
+        if not isinstance(item, dict) or set(item) != required:
             raise SynthesisError("AI 返回事件结构无效")
         story_id = item.get("id")
         if not isinstance(story_id, str) or story_id not in expected or story_id in results:
@@ -46,7 +57,22 @@ def validate_result(payload: dict, stories: list[Story]) -> dict[str, list[dict]
             if not clean:
                 raise SynthesisError("AI 返回空要点")
             checked.append({"text": clean, "sources": list(dict.fromkeys(sources))})
-        results[story_id] = checked
+        translated_title, source_titles = "", {}
+        if require_translation:
+            translated_title = item.get("translated_title")
+            source_titles = item.get("source_titles")
+            if (not isinstance(translated_title, str) or not translated_title.strip()
+                    or len(translated_title) > 300 or not isinstance(source_titles, dict)
+                    or set(source_titles) != expected[story_id]
+                    or any(not isinstance(text, str) or not text.strip() or len(text) > 300
+                           for text in source_titles.values())):
+                raise SynthesisError("AI 未提供完整有效的标题翻译")
+            translated_title = plain_text(translated_title, 300)
+            source_titles = {key: plain_text(text, 300) for key, text in source_titles.items()}
+            if not translated_title or not all(source_titles.values()):
+                raise SynthesisError("AI 返回空标题翻译")
+        results[story_id] = {"bullets": checked, "translated_title": translated_title,
+                             "source_titles": source_titles}
     if results.keys() != expected.keys():
         raise SynthesisError("AI 返回未覆盖全部事件")
     return results
@@ -71,7 +97,9 @@ def synthesize(stories: list[Story], cfg: Config, client) -> dict:
         raise SynthesisError("本期材料超过 AI 输入预算；请减少 max_stories 或提高 max_input_chars")
     body = {
         "model": options["model"],
-        "messages": [{"role": "system", "content": SYSTEM}, {"role": "user", "content": text}],
+        "messages": [{"role": "system", "content": SYSTEM + (
+            TRANSLATED_SCHEMA if options.get("translate_titles", True) else PLAIN_SCHEMA
+        )}, {"role": "user", "content": text}],
         "max_tokens": options["max_output_tokens"],
     }
     if options["json_mode"]:
@@ -95,7 +123,8 @@ def synthesize(stories: list[Story], cfg: Config, client) -> dict:
         choice = response["choices"][0]
         if choice.get("finish_reason") != "stop":
             raise SynthesisError("AI 输出未正常完成，已拒绝截断内容")
-        result = validate_result(json.loads(choice["message"]["content"]), stories)
+        result = validate_result(json.loads(choice["message"]["content"]), stories,
+                                 require_translation=options.get("translate_titles", True))
         usage = response.get("usage", {})
         usage = {key: usage[key] for key in ("prompt_tokens", "completion_tokens", "total_tokens")
                  if isinstance(usage.get(key), int) and usage[key] >= 0}
@@ -104,6 +133,10 @@ def synthesize(stories: list[Story], cfg: Config, client) -> dict:
     except (KeyError, IndexError, TypeError, ValueError):
         raise SynthesisError("AI 返回无法解析或不符合约定") from None
     for story in stories:
-        story.bullets = result[story.id]
+        translated = result[story.id]
+        story.bullets = translated["bullets"]
+        story.translated_title = translated["translated_title"]
+        for article in story.articles:
+            article.translated_title = translated["source_titles"].get(article.id, "")
         story.mode = "ai_synthesis"
     return usage

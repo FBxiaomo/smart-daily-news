@@ -47,12 +47,23 @@ def validate_url(url: str, policy: dict, *, resolve: bool = True) -> None:
 class HttpClient:
     def __init__(self, policy: dict, session=None, sleeper=time.sleep):
         self.policy = policy
+        self._external_session = session is not None
         self.session = session or requests.Session()
         self.sleeper = sleeper
         self.session.headers.update({"User-Agent": "SmartDailyNews/0.2 (+source-linked RSS reader)"})
 
     def close(self):
         self.session.close()
+
+    def fork(self):
+        """Create an isolated client for one fetch worker.
+
+        Custom-injected sessions cannot safely be reproduced; callers can fall
+        back to serial requests when this returns None.
+        """
+        if self._external_session:
+            return None
+        return HttpClient(dict(self.policy), sleeper=self.sleeper)
 
     def get(self, url: str, headers: dict | None = None) -> tuple[bytes, dict, int]:
         attempts = self.policy["get_retries"] + 1
